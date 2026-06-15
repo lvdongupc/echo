@@ -16,18 +16,24 @@
   - Agent 置信度低于阈值 → 自动升级到更高级 Agent 或转人工
 """
 import asyncio
+import json
 import logging
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from anthropic import AsyncAnthropic
 
 from core.intent_recognizer import IntentCategory, IntentRecognizer, UrgencyLevel
 
+if TYPE_CHECKING:
+    from echo_mcp.tool_manager import MCPToolManager
+
 logger = logging.getLogger(__name__)
+
+MAX_TOOL_ROUNDS = 3
 
 
 # ── 数据结构 ──────────────────────────────────────────────────────────────────
@@ -70,6 +76,7 @@ class AgentResponse:
     confidence:  float = 1.0
     latency_ms:  float = 0.0
     escalate:    bool  = False   # 是否需要升级
+    knowledge_used: bool = False
 
 
 @dataclass
@@ -92,6 +99,7 @@ class OrchestratorResult:
     intent:      Optional[IntentCategory]
     escalated:   bool  = False
     latency_ms:  float = 0.0
+    knowledge_used: bool = False
 
 
 # ── 基础 Agent ────────────────────────────────────────────────────────────────
@@ -107,11 +115,21 @@ class BaseAgent:
         self._model  = model
         self.stats   = AgentStats()
 
-    async def handle(self, req: Request) -> AgentResponse:
+    async def handle(
+        self,
+        req: Request,
+        tool_manager: Optional["MCPToolManager"] = None,
+        *,
+        enable_tools: bool = False,
+    ) -> AgentResponse:
         t0 = time.monotonic()
         self.stats.total += 1
         try:
-            content = await self._call_llm(req)
+            if enable_tools and tool_manager is not None:
+                content, knowledge_used = await self._call_llm_with_tools(req, tool_manager)
+            else:
+                content = await self._call_llm(req)
+                knowledge_used = False
             ms = (time.monotonic() - t0) * 1000
             self.stats.success += 1
             self.stats.total_ms += ms
@@ -122,6 +140,7 @@ class BaseAgent:
                 success=True,
                 latency_ms=ms,
                 escalate=escalate,
+                knowledge_used=knowledge_used,
             )
         except Exception as ex:
             ms = (time.monotonic() - t0) * 1000
@@ -151,6 +170,84 @@ class BaseAgent:
             messages=messages,
         )
         return resp.content[0].text
+
+    async def _call_llm_with_tools(
+        self,
+        req: Request,
+        tool_manager: "MCPToolManager",
+    ) -> tuple[str, bool]:
+        """Agent Tool-Use 循环：通过 MCP 工具（如 knowledge_search）获取信息后再回答。"""
+        tools = await tool_manager.to_claude_tools()
+        if not tools:
+            return await self._call_llm(req), False
+
+        messages = self._build_messages(req)
+        knowledge_used = False
+        tool_context = {
+            "user_id": req.user_id,
+            "conv_id": req.conv_id,
+        }
+
+        for _ in range(MAX_TOOL_ROUNDS):
+            resp = await self._client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                system=self._tool_system_prompt(),
+                messages=messages,
+                tools=tools,
+            )
+
+            if resp.stop_reason != "tool_use":
+                return self._extract_text(resp), knowledge_used
+
+            tool_use_blocks = [b for b in resp.content if b.type == "tool_use"]
+            messages.append({"role": "assistant", "content": resp.content})
+
+            tool_results = []
+            for block in tool_use_blocks:
+                logger.info("Agent tool_use: %s", block.name)
+                if block.name == "knowledge_search":
+                    knowledge_used = True
+                result = await tool_manager.call(
+                    block.name,
+                    block.input if isinstance(block.input, dict) else {},
+                    tool_context,
+                )
+                payload = result.data if result.success else {"error": result.error or "工具调用失败"}
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": block.id,
+                    "content": json.dumps(payload, ensure_ascii=False),
+                })
+
+            messages.append({"role": "user", "content": tool_results})
+
+        return "抱歉，处理您的请求时工具调用次数过多，请简化问题后重试。", knowledge_used
+
+    def _build_messages(self, req: Request) -> List[Dict[str, Any]]:
+        def _clean(s: str) -> str:
+            return s.encode("utf-8", errors="ignore").decode("utf-8")
+
+        messages: List[Dict[str, Any]] = []
+        if req.context:
+            messages.append({"role": "user", "content": f"[背景信息]\n{_clean(req.context)}"})
+            messages.append({"role": "assistant", "content": "好的，我已了解背景信息。"})
+        messages.append({"role": "user", "content": _clean(req.message)})
+        return messages
+
+    @staticmethod
+    def _extract_text(resp: Any) -> str:
+        parts = [b.text for b in resp.content if hasattr(b, "text") and b.type == "text"]
+        return "\n".join(parts) if parts else ""
+
+    def _tool_system_prompt(self) -> str:
+        return (
+            f"{self.system_prompt}\n\n"
+            "工具使用规则：\n"
+            "- 用户只是打招呼或闲聊时，直接回复，不要调用 knowledge_search。\n"
+            "- 需要查询政策、FAQ、产品说明等业务知识时，调用 knowledge_search。\n"
+            "- 优先依据工具返回的内容回答；工具无结果时如实说明。"
+        )
 
     def _needs_escalation(self, content: str) -> bool:
         """检测 Agent 是否建议升级（简单关键词检测）。"""
@@ -222,6 +319,17 @@ class AgentOrchestrator:
             AgentType.TECHNICAL: [TechnicalAgent(client, model)],
             AgentType.BILLING:   [BillingAgent(client, model)],
         }
+        self._tool_manager: Optional["MCPToolManager"] = None
+        self._tool_mode: str = "legacy"
+
+    def configure_tools(
+        self,
+        tool_manager: Optional["MCPToolManager"],
+        tool_mode: str = "legacy",
+    ) -> None:
+        """注入 MCP 工具管理器与运行模式（legacy | agent）。"""
+        self._tool_manager = tool_manager
+        self._tool_mode = tool_mode
 
     # ── 主入口 ────────────────────────────────────────────────────────────────
 
@@ -263,6 +371,7 @@ class AgentOrchestrator:
             intent=req.intent,
             escalated=escalated,
             latency_ms=(time.monotonic() - t0) * 1000,
+            knowledge_used=response.knowledge_used,
         )
 
     async def run_parallel(self, req: Request, agent_types: List[AgentType]) -> OrchestratorResult:
@@ -282,6 +391,9 @@ class AgentOrchestrator:
 
         combined = "\n\n".join(parts) if parts else "抱歉，所有 Agent 均处理失败。"
         escalated = any(isinstance(r, AgentResponse) and r.escalate for r in responses)
+        knowledge_used = any(
+            isinstance(r, AgentResponse) and r.knowledge_used for r in responses
+        )
 
         return OrchestratorResult(
             request_id=req.request_id,
@@ -290,6 +402,7 @@ class AgentOrchestrator:
             intent=req.intent,
             escalated=escalated,
             latency_ms=(time.monotonic() - t0) * 1000,
+            knowledge_used=knowledge_used,
         )
 
     # ── 路由逻辑 ──────────────────────────────────────────────────────────────
@@ -356,14 +469,22 @@ class AgentOrchestrator:
                 success=False,
             )
 
-        response = await agent.handle(req)
+        response = await agent.handle(
+            req,
+            self._tool_manager,
+            enable_tools=self._tool_mode == "agent" and self._tool_manager is not None,
+        )
 
         # 专属 Agent 失败时降级到 GeneralAgent
         if not response.success and agent_type != AgentType.GENERAL:
             logger.warning(f"{agent_type.value} 失败，降级到 GeneralAgent")
             fallback = self._best_agent(AgentType.GENERAL)
             if fallback:
-                response = await fallback.handle(req)
+                response = await fallback.handle(
+                    req,
+                    self._tool_manager,
+                    enable_tools=self._tool_mode == "agent" and self._tool_manager is not None,
+                )
 
         return response
 

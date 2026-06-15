@@ -19,9 +19,12 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from anthropic import AsyncAnthropic
+
+if TYPE_CHECKING:
+    from echo_mcp.client_bridge import MCPClientBridge
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +134,13 @@ class MCPToolManager:
       用户查询 → 查询改写（多角度子查询）→ 并行召回 → 结果重排 → 返回 Top-K
     """
 
-    def __init__(self, api_key: str, base_url: Optional[str] = None, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: Optional[str] = None,
+        model: str = "claude-3-5-sonnet-20241022",
+        mcp_bridge: Optional["MCPClientBridge"] = None,
+    ):
         kwargs: Dict[str, Any] = {"api_key": api_key}
         if base_url:
             kwargs["base_url"] = base_url
@@ -139,6 +148,7 @@ class MCPToolManager:
         self._model  = model
         self._tools: Dict[str, Tool] = {}
         self._cache: Dict[str, tuple] = {}   # key → (result, expire_at)
+        self._mcp_bridge = mcp_bridge
 
     # ── 注册 / 注销 ───────────────────────────────────────────────────────────
 
@@ -148,6 +158,72 @@ class MCPToolManager:
 
     def unregister(self, name: str) -> None:
         self._tools.pop(name, None)
+
+    async def sync_from_mcp(
+        self,
+        tool_configs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        从 MCP Server 同步工具定义，并合并本地优化配置（缓存、熔断、降级等）。
+
+        tool_configs 示例::
+            {
+                "knowledge_search": {
+                    "cache_ttl": 300.0,
+                    "supports_rerank": True,
+                    "fallback": fn,
+                }
+            }
+        """
+        if self._mcp_bridge is None:
+            raise RuntimeError("未配置 MCP ClientBridge，无法 sync_from_mcp")
+
+        tool_configs = tool_configs or {}
+        mcp_tools = await self._mcp_bridge.list_tools()
+
+        for spec in mcp_tools:
+            name = spec["name"]
+            cfg = tool_configs.get(name, {})
+
+            async def _mcp_handler(
+                params: Dict[str, Any],
+                context: Optional[Dict[str, Any]],
+                tool_name: str = name,
+            ) -> Any:
+                return await self._mcp_bridge.call_tool(tool_name, params)  # type: ignore
+
+            self.register(Tool(
+                name=name,
+                description=spec.get("description") or "",
+                handler=_mcp_handler,
+                schema=spec.get("inputSchema") or {"type": "object", "properties": {}},
+                cache_ttl=float(cfg.get("cache_ttl", 0.0)),
+                timeout_s=float(cfg.get("timeout_s", 30.0)),
+                supports_rerank=bool(cfg.get("supports_rerank", False)),
+                fallback=cfg.get("fallback"),
+            ))
+
+        logger.info(
+            "已从 MCP Server 同步 %d 个工具: %s",
+            len(mcp_tools),
+            [t["name"] for t in mcp_tools],
+        )
+
+    async def to_claude_tools(self) -> List[Dict[str, Any]]:
+        """将已注册工具转为 Anthropic Tool Use API 格式。"""
+        if self._mcp_bridge is not None:
+            return await self._mcp_bridge.to_claude_tools()
+        return [
+            {
+                "name": t.name,
+                "description": t.description,
+                "input_schema": t.schema,
+            }
+            for t in self._tools.values()
+        ]
+
+    def get_tool_names(self) -> List[str]:
+        return list(self._tools.keys())
 
     # ── 核心调用 ──────────────────────────────────────────────────────────────
 

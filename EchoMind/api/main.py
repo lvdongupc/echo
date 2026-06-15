@@ -49,6 +49,9 @@ _memory       = None
 _tool_manager = None
 _monitor      = None
 _evaluator    = None
+_knowledge_base = None
+_mcp_bridge   = None
+_tool_mode    = os.getenv("TOOL_MODE", "legacy").strip().lower()
 
 
 def _anthropic_cfg() -> Dict[str, Any]:
@@ -68,19 +71,28 @@ def _anthropic_cfg() -> Dict[str, Any]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _orchestrator, _memory, _tool_manager, _monitor, _evaluator
+    global _knowledge_base, _mcp_bridge, _tool_mode
 
     print(BANNER, flush=True)
 
     from agents.agent_orchestrator import AgentOrchestrator, Request
     from core.intent_recognizer import IntentRecognizer
     from evaluation.evaluator import EndToEndEvaluator
-    from mcp.knowledge_base import KnowledgeBase
-    from mcp.tool_manager import MCPToolManager, Tool
+    from echo_mcp.client_bridge import MCPClientBridge
+    from echo_mcp.knowledge_base import KnowledgeBase
+    from echo_mcp.servers.echomind_server import EchoMindMCPServer
+    from echo_mcp.tool_manager import MCPToolManager
     from memory.conversation_memory import MemoryManager
     from monitor.performance_monitor import PerformanceMonitor
 
     cfg = _anthropic_cfg()
     logger.info(f"模型: {cfg['model']}  base_url: {cfg.get('base_url', '(官方)')}")
+
+    _tool_mode = os.getenv("TOOL_MODE", "legacy").strip().lower()
+    if _tool_mode not in ("legacy", "agent"):
+        logger.warning("未知 TOOL_MODE=%s，回退为 legacy", _tool_mode)
+        _tool_mode = "legacy"
+    logger.info("TOOL_MODE=%s", _tool_mode)
 
     # 意图识别器（Orchestrator 内部也会创建，这里单独暴露给 Evaluator）
     recognizer = IntentRecognizer(
@@ -107,18 +119,18 @@ async def lifespan(app: FastAPI):
         model=cfg["model"],
     )
 
-    # MCP 工具管理器 + RAG 知识库（基于 ChromaDB 的真实检索）
-    _tool_manager = MCPToolManager(
-        api_key=cfg["api_key"],
-        base_url=cfg.get("base_url"),
-        model=cfg["model"],
-    )
-    kb = KnowledgeBase(
+    # MCP Server + 知识库（标准 MCP 协议，in-process）
+    _knowledge_base = KnowledgeBase(
         chroma_host=os.getenv("CHROMA_HOST", "chromadb"),
         chroma_port=int(os.getenv("CHROMA_PORT", "8000")),
         chroma_path=os.getenv("CHROMA_PERSIST_DIRECTORY", "/app/data/chroma"),
     )
-    logger.info(f"知识库已加载: {kb.doc_count} 个文档片段")
+    logger.info(f"知识库已加载: {_knowledge_base.doc_count} 个文档片段")
+
+    mcp_server = EchoMindMCPServer()
+    mcp_server.bind_knowledge_base(_knowledge_base)
+    _mcp_bridge = MCPClientBridge(mcp_server.mcp)
+    logger.info("MCP Server 已启动 (transport=%s)", _mcp_bridge.transport)
 
     def knowledge_fallback(params: Dict[str, Any], context: Optional[Dict[str, Any]], error: str):
         query = params.get("query", "")
@@ -130,22 +142,21 @@ async def lifespan(app: FastAPI):
             "error": error,
         }]
 
-    _tool_manager.register(Tool(
-        name="knowledge_search",
-        description="搜索知识库（基于 ChromaDB 向量检索）",
-        handler=kb.search_handler,
-        schema={
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "top_k": {"type": "integer"},
-            },
-            "required": ["query"],
+    _tool_manager = MCPToolManager(
+        api_key=cfg["api_key"],
+        base_url=cfg.get("base_url"),
+        model=cfg["model"],
+        mcp_bridge=_mcp_bridge,
+    )
+    await _tool_manager.sync_from_mcp(tool_configs={
+        "knowledge_search": {
+            "cache_ttl": 300.0,
+            "supports_rerank": True,
+            "fallback": knowledge_fallback,
         },
-        cache_ttl=300.0,
-        supports_rerank=True,
-        fallback=knowledge_fallback,
-    ))
+    })
+
+    _orchestrator.configure_tools(_tool_manager, _tool_mode)
 
     # 性能监控（可选启动 Prometheus）
     prom_port = int(os.getenv("PROMETHEUS_PORT", "0")) or None
@@ -213,7 +224,30 @@ class ChatResponse(BaseModel):
 async def health():
     if _orchestrator is None:
         raise HTTPException(503, "服务未就绪")
-    return {"status": "ok", "agents": _orchestrator.get_stats()}
+    payload: Dict[str, Any] = {
+        "status": "ok",
+        "tool_mode": _tool_mode,
+        "agents": _orchestrator.get_stats(),
+    }
+    if _mcp_bridge is not None and _tool_manager is not None:
+        payload["mcp"] = {
+            "transport": _mcp_bridge.transport,
+            "tools": _tool_manager.get_tool_names(),
+        }
+    return payload
+
+
+@app.get("/mcp/tools")
+async def mcp_tools():
+    """调试：列出 MCP Server 暴露的标准工具。"""
+    if _mcp_bridge is None:
+        raise HTTPException(503, "MCP 未就绪")
+    tools = await _mcp_bridge.list_tools()
+    return {
+        "transport": _mcp_bridge.transport,
+        "tool_mode": _tool_mode,
+        "tools": tools,
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -239,10 +273,15 @@ async def chat(req: ChatRequest):
         for m in mem_ctx.recent_messages[-5:]
     ] if mem_ctx.recent_messages else None
 
-    knowledge_text, knowledge_used = await _build_knowledge_context(req.message)
+    knowledge_used = False
     context_parts = [mem_ctx.to_prompt_text()]
-    if knowledge_text:
-        context_parts.append(knowledge_text)
+
+    if _tool_mode == "legacy":
+        knowledge_text, knowledge_used = await _build_knowledge_context(req.message)
+        if knowledge_text:
+            context_parts.append(knowledge_text)
+    # agent 模式：由 Agent 通过 MCP 自主调用 knowledge_search
+
     full_context = "\n\n".join(part for part in context_parts if part)
 
     orch_req = OrcReq(
@@ -255,6 +294,9 @@ async def chat(req: ChatRequest):
 
     # 3. 执行
     result = await _orchestrator.run(orch_req)
+
+    if _tool_mode == "agent":
+        knowledge_used = result.knowledge_used
 
     # 4. 写入记忆
     await _memory.add_message(req.user_id, conv_id, MsgRole.USER, req.message)
@@ -402,12 +444,11 @@ async def add_knowledge(body: BatchDocInput):
     }
     ```
     """
-    tool = _tool_manager._tools.get("knowledge_search") if _tool_manager else None
+    tool = _knowledge_base
     if tool is None:
         raise HTTPException(503, "知识库未初始化")
-    kb = tool.handler.__self__
-    count = kb.add_documents([{"title": d.title, "content": d.content} for d in body.documents])
-    return {"message": f"成功导入 {count} 个文档片段", "added_chunks": count, "total_chunks": kb.doc_count}
+    count = tool.add_documents([{"title": d.title, "content": d.content} for d in body.documents])
+    return {"message": f"成功导入 {count} 个文档片段", "added_chunks": count, "total_chunks": tool.doc_count}
 
 
 @app.post("/knowledge/upload", tags=["知识库"])
@@ -421,12 +462,9 @@ async def upload_knowledge(file: UploadFile = File(...)):
 
     文件大小限制：10MB
     """
-    tool = _tool_manager._tools.get("knowledge_search") if _tool_manager else None
-    if tool is None:
+    if _knowledge_base is None:
         raise HTTPException(503, "知识库未初始化")
-    kb = tool.handler.__self__
-
-    content = await file.read()
+    kb = _knowledge_base
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "文件大小超过 10MB 限制")
 
@@ -457,11 +495,9 @@ async def upload_knowledge(file: UploadFile = File(...)):
 @app.get("/knowledge/stats", tags=["知识库"])
 async def knowledge_stats():
     """查看知识库统计信息（文档片段总数）。"""
-    tool = _tool_manager._tools.get("knowledge_search") if _tool_manager else None
-    if tool is None:
+    if _knowledge_base is None:
         raise HTTPException(503, "知识库未初始化")
-    kb = tool.handler.__self__
-    return {"total_chunks": kb.doc_count}
+    return {"total_chunks": _knowledge_base.doc_count}
 
 
 @app.post("/eval/run")
