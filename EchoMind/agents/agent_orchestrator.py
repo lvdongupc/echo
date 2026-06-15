@@ -18,6 +18,8 @@
 import asyncio
 import json
 import logging
+import os
+import random
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -109,11 +111,16 @@ class BaseAgent:
 
     agent_type: AgentType
     system_prompt: str
+    instance_label: str = ""
 
     def __init__(self, client: AsyncAnthropic, model: str):
         self._client = client
         self._model  = model
         self.stats   = AgentStats()
+
+    def _should_simulate_failure(self) -> bool:
+        """子类可覆盖，用于 demo 模拟低成功率以触发 Monitor 路由反馈。"""
+        return False
 
     async def handle(
         self,
@@ -124,6 +131,22 @@ class BaseAgent:
     ) -> AgentResponse:
         t0 = time.monotonic()
         self.stats.total += 1
+
+        if self._should_simulate_failure():
+            ms = (time.monotonic() - t0) * 1000 + random.uniform(50, 200)
+            self.stats.total_ms += ms
+            logger.warning(
+                "%s [%s] demo 模拟失败",
+                self.agent_type.value,
+                self.instance_label or self.__class__.__name__,
+            )
+            return AgentResponse(
+                agent_type=self.agent_type,
+                content="抱歉，处理您的请求时出现问题，请稍后重试。",
+                success=False,
+                latency_ms=ms,
+            )
+
         try:
             if enable_tools and tool_manager is not None:
                 content, knowledge_used = await self._call_llm_with_tools(req, tool_manager)
@@ -264,11 +287,45 @@ class GeneralAgent(BaseAgent):
 
 
 class TechnicalAgent(BaseAgent):
-    agent_type    = AgentType.TECHNICAL
-    system_prompt = (
+    agent_type     = AgentType.TECHNICAL
+    instance_label = "general"
+    system_prompt  = (
         "你是技术支持专家。专注于：故障排查、错误诊断、系统配置。"
         "提供清晰的步骤化解决方案。遇到需要后台操作的问题，说明需要升级处理。"
     )
+
+
+class TechnicalLoginAgent(BaseAgent):
+    """登录/认证专项 Agent，与 general 实例并列供性能路由选择。"""
+
+    agent_type     = AgentType.TECHNICAL
+    instance_label = "login"
+    system_prompt  = (
+        "你是登录与账号认证技术支持专家。专注于：无法登录、密码重置、"
+        "验证码收不到、401/403、OAuth/SSO 配置。"
+        "按步骤排查，必要时说明需要升级或转人工。"
+    )
+
+
+class TechnicalLegacyAgent(BaseAgent):
+    """
+    旧版技术支持 Agent（demo 用）。
+
+    设置环境变量 DEMO_WEAK_TECHNICAL=1 时，约 35% 请求模拟失败，
+    用于演示 Monitor → routing_penalty → _best_agent() 的闭环。
+    """
+
+    agent_type     = AgentType.TECHNICAL
+    instance_label = "legacy"
+    system_prompt  = (
+        "你是技术支持助手。尽量回答用户问题。"
+        "如果不确定，可以建议用户联系人工。"
+    )
+
+    def _should_simulate_failure(self) -> bool:
+        if os.getenv("DEMO_WEAK_TECHNICAL", "").lower() not in ("1", "true", "yes"):
+            return False
+        return random.random() < 0.35
 
 
 class BillingAgent(BaseAgent):
@@ -314,9 +371,14 @@ class AgentOrchestrator:
         self._intent_recognizer = IntentRecognizer(api_key=api_key, base_url=base_url, model=model)
 
         # Agent 池：每种类型可有多个实例（水平扩展）
+        # TECHNICAL 保留 3 个实例，供 Monitor 性能路由与降权演示
         self._pool: Dict[AgentType, List[BaseAgent]] = {
             AgentType.GENERAL:   [GeneralAgent(client, model)],
-            AgentType.TECHNICAL: [TechnicalAgent(client, model)],
+            AgentType.TECHNICAL: [
+                TechnicalAgent(client, model),
+                TechnicalLoginAgent(client, model),
+                TechnicalLegacyAgent(client, model),
+            ],
             AgentType.BILLING:   [BillingAgent(client, model)],
         }
         self._tool_manager: Optional["MCPToolManager"] = None
@@ -455,7 +517,16 @@ class AgentOrchestrator:
         agents = self._pool.get(agent_type, [])
         if not agents:
             return None
-        return max(agents, key=lambda a: a.stats.routing_score())
+        chosen = max(agents, key=lambda a: a.stats.routing_score())
+        if len(agents) > 1:
+            label = chosen.instance_label or chosen.__class__.__name__
+            logger.info(
+                "性能路由 %s → [%s] routing_score=%.3f",
+                agent_type.value,
+                label,
+                chosen.stats.routing_score(),
+            )
+        return chosen
 
     async def _execute(self, req: Request, agent_type: AgentType) -> AgentResponse:
         """执行 Agent，失败时降级到 GeneralAgent。"""
@@ -496,6 +567,7 @@ class AgentOrchestrator:
             for i, agent in enumerate(agents):
                 key = f"{agent_type.value}_{i}"
                 result[key] = {
+                    "label":        agent.instance_label or agent.__class__.__name__,
                     "total":        agent.stats.total,
                     "success_rate": round(agent.stats.success_rate, 3),
                     "avg_ms":       round(agent.stats.avg_ms, 1),
