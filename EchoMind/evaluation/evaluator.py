@@ -32,11 +32,7 @@ logger = logging.getLogger(__name__)
 
 # ── 数据结构 ──────────────────────────────────────────────────────────────────
 
-@dataclass
-class IntentTestCase:
-    message:          str
-    expected_intent:  str
-    context:          Optional[Dict[str, Any]] = None
+from evaluation.types import EvalReport, EvalResult, IntentTestCase
 
 
 @dataclass
@@ -52,28 +48,6 @@ class QualityScores:
     @property
     def overall(self) -> float:
         return statistics.mean([self.relevance, self.accuracy, self.completeness, self.helpfulness])
-
-
-@dataclass
-class EvalResult:
-    test_id:    str
-    passed:     bool
-    scores:     Dict[str, float]
-    detail:     str = ""
-    metadata:   Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class EvalReport:
-    """评测报告。"""
-    timestamp:        str
-    total:            int
-    passed:           int
-    pass_rate:        float
-    avg_scores:       Dict[str, float]
-    regressions:      List[str]          # 相比基线退化的指标
-    recommendations:  List[str]
-    results:          List[EvalResult]
 
 
 # ── LLM-as-Judge ─────────────────────────────────────────────────────────────
@@ -166,7 +140,10 @@ class IntentEvaluator:
         case_details: List[Dict[str, Any]] = []
 
         for case in cases:
-            result = await self._recognizer.recognize(case.message)
+            history = case.history
+            if history is None and case.context:
+                history = case.context.get("history")
+            result = await self._recognizer.recognize(case.message, history=history)
             predicted = result.intent.value
             predictions.append(predicted)
             ground_truth.append(case.expected_intent)
@@ -178,32 +155,9 @@ class IntentEvaluator:
                 "reasoning": result.reasoning,
             })
 
-        # 纯 Python 计算指标
-        correct = sum(p == g for p, g in zip(predictions, ground_truth))
-        accuracy = correct / len(predictions) if predictions else 0.0
-
-        # 每类 F1
-        labels = sorted(set(ground_truth + predictions))
-        per_class: Dict[str, Dict[str, float]] = {}
-        for label in labels:
-            tp = sum(p == label and g == label for p, g in zip(predictions, ground_truth))
-            fp = sum(p == label and g != label for p, g in zip(predictions, ground_truth))
-            fn = sum(p != label and g == label for p, g in zip(predictions, ground_truth))
-            prec = tp / (tp + fp) if (tp + fp) else 0.0
-            rec  = tp / (tp + fn) if (tp + fn) else 0.0
-            f1   = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
-            per_class[label] = {"precision": prec, "recall": rec, "f1": f1}
-
-        macro_f1 = statistics.mean(v["f1"] for v in per_class.values()) if per_class else 0.0
-
-        return {
-            "accuracy":   round(accuracy, 4),
-            "macro_f1":   round(macro_f1, 4),
-            "per_class":  per_class,
-            "total":      len(cases),
-            "correct":    correct,
-            "cases":      case_details,
-        }
+        metrics = compute_classification_metrics(predictions, ground_truth)
+        metrics["cases"] = case_details
+        return metrics
 
 
 # ── 端到端评测器 ──────────────────────────────────────────────────────────────
@@ -247,6 +201,7 @@ class EndToEndEvaluator:
         self,
         intent_cases:    Optional[List[IntentTestCase]] = None,
         dialog_cases:    Optional[List[Dict[str, Any]]] = None,
+        dataset_stats:   Optional[Dict[str, Any]] = None,
     ) -> EvalReport:
         """
         运行完整评测。
@@ -313,6 +268,8 @@ class EndToEndEvaluator:
             regressions=regressions,
             recommendations=recommendations,
             results=results,
+            intent_metrics=intent_metrics if intent_metrics else None,
+            dataset_stats=dataset_stats,
         )
         self._history.append(report)
         self._save_baseline(report)
@@ -391,8 +348,8 @@ class EndToEndEvaluator:
         return "[评测多轮历史]\n" + "\n".join(lines)
 
     def _detect_regressions(self, current: Dict[str, float]) -> List[str]:
-        """与上一次评测对比，找出退化超过 5% 的指标。"""
-        prev_report = self._history[-1] if self._history else self._baseline
+        """与基线或上一次评测对比，找出退化超过 5% 的指标。"""
+        prev_report = self._baseline if self._baseline else (self._history[-1] if self._history else None)
         if prev_report is None:
             return []
         prev = prev_report.avg_scores
@@ -471,26 +428,23 @@ class EndToEndEvaluator:
                 )
                 for r in data.get("results", [])
             ],
+            intent_metrics=data.get("intent_metrics"),
+            dataset_stats=data.get("dataset_stats"),
         )
 
 
-# ── 内置测试用例（开箱即用）──────────────────────────────────────────────────
+from evaluation.metrics import compute_classification_metrics
 
-DEFAULT_INTENT_CASES: List[IntentTestCase] = [
-    IntentTestCase("我的订单什么时候到？",       "query"),
-    IntentTestCase("帮我取消订单",               "request"),
-    IntentTestCase("你们服务太差了！",            "complaint"),
-    IntentTestCase("应用一直报500错误",           "technical"),
-    IntentTestCase("为什么扣了两次款？",          "billing"),
-    IntentTestCase("我要投诉，转人工！",          "escalation"),
-    IntentTestCase("你好",                        "greeting"),
-    IntentTestCase("修改我的邮箱地址",            "account"),
-]
+def _load_default_cases():
+    from evaluation.datasets.loader import load_dialog_cases, load_intent_cases
+    return load_intent_cases(), load_dialog_cases()
 
-DEFAULT_DIALOG_CASES: List[Dict[str, Any]] = [
-    {"question": "我的订单 #12345 还没到，已经超时了"},
-    {"question": "应用登录一直报错 401"},
-    {"question": "为什么这个月多扣了 50 块钱？"},
-    {"question": "帮我把收货地址改成北京市朝阳区"},
-    {"turns": ["你好，我想退款", "订单号是 #12345", "退款多久能到账？"]},
-]
+
+try:
+    DEFAULT_INTENT_CASES, DEFAULT_DIALOG_CASES = _load_default_cases()
+except FileNotFoundError:
+    DEFAULT_INTENT_CASES = [
+        IntentTestCase("我的订单什么时候到？", "query"),
+        IntentTestCase("你好", "greeting"),
+    ]
+    DEFAULT_DIALOG_CASES = [{"question": "退款政策是什么？"}]

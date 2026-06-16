@@ -176,7 +176,7 @@ async def lifespan(app: FastAPI):
         api_key=cfg["api_key"],
         base_url=cfg.get("base_url"),
         model=cfg["model"],
-        baseline_path=os.getenv("EVAL_BASELINE_PATH", "/app/data/eval/baseline.json"),
+        baseline_path=os.getenv("EVAL_BASELINE_PATH", "/app/evaluation/baselines/baseline.json"),
     )
 
     logger.info("EchoMind 已就绪")
@@ -500,12 +500,23 @@ async def knowledge_stats():
     return {"total_chunks": _knowledge_base.doc_count}
 
 
+@app.get("/eval/datasets")
+async def eval_datasets():
+    """返回评测数据集规模统计。"""
+    from evaluation.datasets.loader import dataset_stats
+    return dataset_stats()
+
+
 @app.post("/eval/run")
 async def run_eval(body: Optional[EvalRunInput] = None):
-    """运行内置评测用例，返回评测报告。"""
+    """运行评测用例，返回评测报告（默认使用 evaluation/datasets/*.json）。"""
     if _evaluator is None:
         raise HTTPException(503, "服务未就绪")
-    from evaluation.evaluator import DEFAULT_DIALOG_CASES, DEFAULT_INTENT_CASES, IntentTestCase
+    from evaluation.datasets.loader import dataset_stats, load_dialog_cases, load_intent_cases
+    from evaluation.types import IntentTestCase
+    from evaluation.report import format_markdown_report, report_to_dict
+
+    stats = dataset_stats()
 
     if body and body.intent_cases is not None:
         intent_cases = [
@@ -517,7 +528,7 @@ async def run_eval(body: Optional[EvalRunInput] = None):
             for c in body.intent_cases
         ]
     else:
-        intent_cases = DEFAULT_INTENT_CASES
+        intent_cases = load_intent_cases()
 
     if body and body.dialog_cases is not None:
         dialog_cases = [
@@ -525,30 +536,19 @@ async def run_eval(body: Optional[EvalRunInput] = None):
             for c in body.dialog_cases
         ]
     else:
-        dialog_cases = DEFAULT_DIALOG_CASES
+        dialog_cases = load_dialog_cases()
 
     report = await _evaluator.run(
         intent_cases=intent_cases,
         dialog_cases=dialog_cases,
+        dataset_stats=stats,
     )
-    return {
-        "pass_rate":       report.pass_rate,
-        "total":           report.total,
-        "passed":          report.passed,
-        "avg_scores":      report.avg_scores,
-        "regressions":     report.regressions,
-        "recommendations": report.recommendations,
-        "results": [
-            {
-                "test_id": r.test_id,
-                "passed": r.passed,
-                "scores": r.scores,
-                "detail": r.detail,
-                "metadata": r.metadata,
-            }
-            for r in report.results
-        ],
-    }
+    intent_metrics = report.intent_metrics or {}
+    payload = report_to_dict(report, intent_metrics=intent_metrics, dataset_stats=stats)
+    payload["summary_md"] = format_markdown_report(
+        report, intent_metrics=intent_metrics, dataset_stats=stats
+    )
+    return payload
 
 
 # ── 交互式 CLI ────────────────────────────────────────────────────────────────

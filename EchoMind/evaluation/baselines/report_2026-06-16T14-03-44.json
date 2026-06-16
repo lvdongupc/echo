@@ -1,0 +1,1455 @@
+{
+  "timestamp": "2026-06-16T14:03:44.350743",
+  "total": 1,
+  "passed": 1,
+  "pass_rate": 1.0,
+  "avg_scores": {
+    "intent_accuracy": 0.913
+  },
+  "regressions": [],
+  "recommendations": [
+    "所有指标均达标，继续保持"
+  ],
+  "results": [
+    {
+      "test_id": "intent_recognition",
+      "passed": true,
+      "scores": {
+        "accuracy": 0.913,
+        "macro_f1": 0.923
+      },
+      "detail": "准确率 91.3%，Macro-F1 0.923",
+      "metadata": {
+        "total": 92,
+        "correct": 84,
+        "cases": [
+          {
+            "message": "我的订单什么时候到？",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问订单到达时间，属于查询类意图。"
+          },
+          {
+            "message": "订单 #8821 物流到哪了",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户明确询问订单物流状态，属于信息查询意图。"
+          },
+          {
+            "message": "查一下配送进度",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求查询配送进度，属于信息查询类意图。"
+          },
+          {
+            "message": "包裹显示已发货三天了还没到",
+            "expected": "query",
+            "predicted": "complaint",
+            "confidence": 0.85,
+            "reasoning": "用户抱怨包裹已发货三天仍未到达，表达了对物流延迟的不满。"
+          },
+          {
+            "message": "能告诉我预计送达时间吗",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问预计送达时间，属于查询类意图。"
+          },
+          {
+            "message": "快递单号 SF1234567890 现在在哪",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问快递单号的当前位置，属于查询类意图。"
+          },
+          {
+            "message": "我的包裹卡在转运中心了",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.85,
+            "reasoning": "用户询问包裹状态，属于查询类意图。"
+          },
+          {
+            "message": "订单状态一直是 processing 正常吗",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问订单状态是否正常，属于信息查询类意图。"
+          },
+          {
+            "message": "什么时候能收到商品",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问商品送达时间，属于查询类意图。"
+          },
+          {
+            "message": "配送超时了怎么办",
+            "expected": "query",
+            "predicted": "complaint",
+            "confidence": 0.85,
+            "reasoning": "用户表达配送超时的问题，带有不满情绪，属于投诉类意图。"
+          },
+          {
+            "message": "查订单 556677 的物流",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求查询订单物流信息，属于信息查询类意图。"
+          },
+          {
+            "message": "货运信息怎么查",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问如何查询货运信息，属于信息查询类意图。"
+          },
+          {
+            "message": "我的预售商品什么时候发货",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问预售商品的发货时间，属于查询类意图。"
+          },
+          {
+            "message": "帮我取消订单",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 1.0,
+            "reasoning": "用户明确要求执行取消订单的操作，属于请求类意图。"
+          },
+          {
+            "message": "请把订单改成明天配送",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求修改订单配送时间，属于请求操作。"
+          },
+          {
+            "message": "我需要修改收货地址",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求修改收货地址，属于操作请求。"
+          },
+          {
+            "message": "帮我申请退货",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求执行退货操作，属于请求类意图。"
+          },
+          {
+            "message": "请暂停我的订阅",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求执行暂停订阅的操作，属于请求类意图。"
+          },
+          {
+            "message": "能不能换一个大一号的",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求更换商品尺寸，属于服务请求。"
+          },
+          {
+            "message": "帮我备注放门口",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求客服执行‘备注放门口’的操作，属于服务请求。"
+          },
+          {
+            "message": "请重新发送验证码",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求重新发送验证码，属于请求类操作。"
+          },
+          {
+            "message": "我需要开具电子发票",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求开具电子发票，属于请求类意图。"
+          },
+          {
+            "message": "帮我合并两个订单发货",
+            "expected": "request",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求执行合并订单发货的操作，属于请求类意图。"
+          },
+          {
+            "message": "你们服务太差了！",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户直接表达了对服务的不满，属于投诉类意图。"
+          },
+          {
+            "message": "等了一个小时没人回复",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.9,
+            "reasoning": "用户明确表达了等待时间过长的不满，属于投诉类意图。"
+          },
+          {
+            "message": "客服态度非常恶劣",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达了对客服态度的负面评价，属于投诉类意图。"
+          },
+          {
+            "message": "配送员把包裹扔在门口就跑了",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户抱怨配送员将包裹随意丢弃在门口，未妥善交付，属于对服务的不满。"
+          },
+          {
+            "message": "承诺48小时解决现在一周了",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户抱怨承诺的48小时解决时间已过一周，表达不满情绪。"
+          },
+          {
+            "message": "产品质量和描述完全不符",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户明确表示产品质量与描述不符，属于对产品或服务的不满，符合投诉意图。"
+          },
+          {
+            "message": "这次体验 horrible",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.95,
+            "reasoning": "用户使用负面词汇'horrible'表达对体验的不满，属于投诉类意图。"
+          },
+          {
+            "message": "反复踢皮球没人负责",
+            "expected": "complaint",
+            "predicted": "complaint",
+            "confidence": 0.9,
+            "reasoning": "用户表达了对服务中推诿责任的不满，属于抱怨意图。"
+          },
+          {
+            "message": "应用一直报500错误",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户报告应用持续出现500错误，属于技术问题"
+          },
+          {
+            "message": "登录页面白屏",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户描述登录页面白屏，属于技术问题，符合technical意图"
+          },
+          {
+            "message": "App 闪退无法打开",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户描述App闪退无法打开，属于技术问题"
+          },
+          {
+            "message": "更新后无法启动",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户描述的是软件更新后无法启动的技术问题，符合technical意图"
+          },
+          {
+            "message": "一直提示 network error",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户描述网络错误提示，属于技术问题范畴。"
+          },
+          {
+            "message": "401 unauthorized 登录失败",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户报告了HTTP 401错误和登录失败，属于技术问题。"
+          },
+          {
+            "message": "系统 crash 了三次",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户明确提到系统崩溃（crash）三次，属于技术问题。"
+          },
+          {
+            "message": "接口 timeout 怎么办",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户询问接口超时问题，属于技术故障类咨询。"
+          },
+          {
+            "message": "后台一直 loading",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户描述应用后台持续加载中，属于技术问题"
+          },
+          {
+            "message": "OAuth 配置报错",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户提到OAuth配置报错，属于技术问题，与示例中'应用一直崩溃'类似。"
+          },
+          {
+            "message": "502 bad gateway",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户提到'502 bad gateway'，这是一个典型的HTTP服务器错误，属于技术问题。"
+          },
+          {
+            "message": "数据库连接失败提示",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.95,
+            "reasoning": "用户报告数据库连接失败，属于技术问题"
+          },
+          {
+            "message": "为什么扣了两次款？",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.95,
+            "reasoning": "用户询问扣款问题，属于账单相关意图"
+          },
+          {
+            "message": "退款多久到账",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.9,
+            "reasoning": "用户询问退款到账时间，涉及财务相关流程，属于账单类意图。"
+          },
+          {
+            "message": "发票开错了能重开吗",
+            "expected": "billing",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户请求重新开具发票，属于明确的业务操作请求。"
+          },
+          {
+            "message": "订阅多扣了一个月",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.95,
+            "reasoning": "用户提到订阅多扣款，属于账单相关的问题。"
+          },
+          {
+            "message": "支付失败但钱被扣了",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.95,
+            "reasoning": "用户反馈支付失败但钱被扣，涉及扣款问题，属于账单相关意图"
+          },
+          {
+            "message": "账单金额不对",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.95,
+            "reasoning": "用户明确提到账单金额问题，属于账单相关意图"
+          },
+          {
+            "message": "申请 refund 流程是什么",
+            "expected": "billing",
+            "predicted": "query",
+            "confidence": 0.95,
+            "reasoning": "用户询问退款流程，属于信息查询类意图。"
+          },
+          {
+            "message": "自动续费怎么关",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.9,
+            "reasoning": "用户询问如何关闭自动续费，涉及费用相关操作，属于账单意图。"
+          },
+          {
+            "message": "扣款记录在哪里看",
+            "expected": "billing",
+            "predicted": "billing",
+            "confidence": 0.95,
+            "reasoning": "用户询问扣款记录的查看位置，直接涉及账单和支付信息，属于billing意图。"
+          },
+          {
+            "message": "这单能全额退款吗",
+            "expected": "billing",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户询问能否全额退款，属于请求类意图。"
+          },
+          {
+            "message": "我要投诉，转人工！",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求投诉并转人工，符合升级处理意图"
+          },
+          {
+            "message": "叫你们经理来",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户要求与经理对话，属于升级投诉或寻求更高层级处理的典型表达。"
+          },
+          {
+            "message": "必须转 supervisor 处理",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求转接主管处理，属于升级投诉或请求更高权限处理的意图。"
+          },
+          {
+            "message": "我要找人工客服",
+            "expected": "escalation",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达需要人工客服协助，属于请求类意图。"
+          },
+          {
+            "message": "这个问题必须升级处理",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求将问题升级处理，符合升级投诉的意图"
+          },
+          {
+            "message": "请立即转接专员",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求转接专员，属于升级处理或投诉的意图。"
+          },
+          {
+            "message": "我不接受机器人回复了",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.9,
+            "reasoning": "用户明确表示不接受机器人回复，要求人工介入，属于升级投诉的意图。"
+          },
+          {
+            "message": "投诉到底找谁",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达投诉意愿并询问投诉对象，属于升级投诉意图。"
+          },
+          {
+            "message": "你好",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 1.0,
+            "reasoning": "用户消息为'你好'，与示例中'你好'的意图完全一致，属于问候语。"
+          },
+          {
+            "message": "您好",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户使用礼貌用语'您好'，符合问候意图的典型表达。"
+          },
+          {
+            "message": "嗨",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户发送了简单的问候语'嗨'，符合greeting意图的典型表达。"
+          },
+          {
+            "message": "hello",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户发送了常见的问候语'hello'，与示例中的'你好'意图一致。"
+          },
+          {
+            "message": "Hi there",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户发送了常见的问候语'Hi there'，与示例中'你好'的意图一致。"
+          },
+          {
+            "message": "早上好",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户使用常见的问候语'早上好'，符合greeting意图的典型表达。"
+          },
+          {
+            "message": "晚上好",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户使用问候语'晚上好'，与示例中的'你好'意图一致"
+          },
+          {
+            "message": "在吗",
+            "expected": "greeting",
+            "predicted": "greeting",
+            "confidence": 0.95,
+            "reasoning": "用户使用常见的问候语'在吗'，与示例中'你好'的意图一致。"
+          },
+          {
+            "message": "修改我的邮箱地址",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求修改邮箱地址，属于账户信息变更操作。"
+          },
+          {
+            "message": "忘记密码怎么办",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户询问忘记密码的处理方法，属于账户相关操作"
+          },
+          {
+            "message": "账户被锁定了",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户明确提到账户被锁定，属于账户相关的问题。"
+          },
+          {
+            "message": "怎么绑定手机号",
+            "expected": "account",
+            "predicted": "request",
+            "confidence": 0.95,
+            "reasoning": "用户询问如何绑定手机号，属于请求操作指导的意图。"
+          },
+          {
+            "message": "更换登录密码",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求更换登录密码，属于账户管理相关操作。"
+          },
+          {
+            "message": "注销账户流程",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户明确询问注销账户的流程，属于账户相关操作"
+          },
+          {
+            "message": "账号显示异常登录",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户提到账号显示异常登录，属于账户安全问题，符合account意图。"
+          },
+          {
+            "message": "修改收货人姓名",
+            "expected": "account",
+            "predicted": "account",
+            "confidence": 0.95,
+            "reasoning": "用户要求修改收货人姓名，属于账户信息变更操作。"
+          },
+          {
+            "message": "你们客服响应很快，点赞",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达了对客服响应速度的正面评价，属于反馈类意图。"
+          },
+          {
+            "message": "这次问题解决得很满意",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达了对问题解决结果的满意，属于正面反馈。"
+          },
+          {
+            "message": "产品很好用谢谢",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.95,
+            "reasoning": "用户表达了对产品的正面评价和感谢，属于反馈意图。"
+          },
+          {
+            "message": "服务体验不错",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.95,
+            "reasoning": "用户表达了对服务的正面评价，属于反馈类意图。"
+          },
+          {
+            "message": "处理效率很高，感谢",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.95,
+            "reasoning": "用户明确表达了对服务效率的正面评价和感谢，属于反馈类意图。"
+          },
+          {
+            "message": "今天天气怎么样",
+            "expected": "other",
+            "predicted": "other",
+            "confidence": 0.95,
+            "reasoning": "用户询问天气，不属于客服常见意图类别，归类为其他。"
+          },
+          {
+            "message": "随便聊聊",
+            "expected": "other",
+            "predicted": "other",
+            "confidence": 0.9,
+            "reasoning": "用户表示‘随便聊聊’，没有明确的服务请求、投诉或具体问题，属于非任务型闲聊。"
+          },
+          {
+            "message": "asdfghjkl",
+            "expected": "other",
+            "predicted": "other",
+            "confidence": 0.95,
+            "reasoning": "用户输入为无意义的乱码字符串，无法匹配任何已知意图类别。"
+          },
+          {
+            "message": "？？？",
+            "expected": "other",
+            "predicted": "other",
+            "confidence": 0.9,
+            "reasoning": "用户仅发送了问号，没有明确表达任何意图，因此归类为其他。"
+          },
+          {
+            "message": "嗯嗯",
+            "expected": "other",
+            "predicted": "other",
+            "confidence": 0.9,
+            "reasoning": "用户消息'嗯嗯'是模糊的肯定回应，未明确表达任何具体意图，因此归类为其他。"
+          },
+          {
+            "message": "那退款呢",
+            "expected": "billing",
+            "predicted": "request",
+            "confidence": 0.85,
+            "reasoning": "用户询问退款相关操作，属于请求类意图"
+          },
+          {
+            "message": "还是登录不了",
+            "expected": "technical",
+            "predicted": "technical",
+            "confidence": 0.9,
+            "reasoning": "用户提到'401错误'和'还是登录不了'，属于技术问题，符合technical意图。"
+          },
+          {
+            "message": "帮我查一下",
+            "expected": "query",
+            "predicted": "query",
+            "confidence": 0.85,
+            "reasoning": "用户请求查询订单信息，属于查询意图"
+          },
+          {
+            "message": "转人工吧",
+            "expected": "escalation",
+            "predicted": "escalation",
+            "confidence": 0.95,
+            "reasoning": "用户明确要求转人工，表明对当前服务不满，意图升级处理"
+          },
+          {
+            "message": "谢谢解决了",
+            "expected": "feedback",
+            "predicted": "feedback",
+            "confidence": 0.9,
+            "reasoning": "用户表达感谢并确认问题已解决，属于正面反馈。"
+          }
+        ]
+      }
+    }
+  ],
+  "intent_metrics": {
+    "accuracy": 0.913,
+    "macro_f1": 0.923,
+    "per_class": {
+      "account": {
+        "precision": 1.0,
+        "recall": 0.875,
+        "f1": 0.9333333333333333
+      },
+      "billing": {
+        "precision": 1.0,
+        "recall": 0.6363636363636364,
+        "f1": 0.7777777777777778
+      },
+      "complaint": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.888888888888889
+      },
+      "escalation": {
+        "precision": 1.0,
+        "recall": 0.8888888888888888,
+        "f1": 0.9411764705882353
+      },
+      "feedback": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "greeting": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "other": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "query": {
+        "precision": 0.9230769230769231,
+        "recall": 0.8571428571428571,
+        "f1": 0.888888888888889
+      },
+      "request": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8
+      },
+      "technical": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "total": 92,
+    "correct": 84,
+    "cases": [
+      {
+        "message": "我的订单什么时候到？",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问订单到达时间，属于查询类意图。"
+      },
+      {
+        "message": "订单 #8821 物流到哪了",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户明确询问订单物流状态，属于信息查询意图。"
+      },
+      {
+        "message": "查一下配送进度",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求查询配送进度，属于信息查询类意图。"
+      },
+      {
+        "message": "包裹显示已发货三天了还没到",
+        "expected": "query",
+        "predicted": "complaint",
+        "confidence": 0.85,
+        "reasoning": "用户抱怨包裹已发货三天仍未到达，表达了对物流延迟的不满。"
+      },
+      {
+        "message": "能告诉我预计送达时间吗",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问预计送达时间，属于查询类意图。"
+      },
+      {
+        "message": "快递单号 SF1234567890 现在在哪",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问快递单号的当前位置，属于查询类意图。"
+      },
+      {
+        "message": "我的包裹卡在转运中心了",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.85,
+        "reasoning": "用户询问包裹状态，属于查询类意图。"
+      },
+      {
+        "message": "订单状态一直是 processing 正常吗",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问订单状态是否正常，属于信息查询类意图。"
+      },
+      {
+        "message": "什么时候能收到商品",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问商品送达时间，属于查询类意图。"
+      },
+      {
+        "message": "配送超时了怎么办",
+        "expected": "query",
+        "predicted": "complaint",
+        "confidence": 0.85,
+        "reasoning": "用户表达配送超时的问题，带有不满情绪，属于投诉类意图。"
+      },
+      {
+        "message": "查订单 556677 的物流",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求查询订单物流信息，属于信息查询类意图。"
+      },
+      {
+        "message": "货运信息怎么查",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问如何查询货运信息，属于信息查询类意图。"
+      },
+      {
+        "message": "我的预售商品什么时候发货",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问预售商品的发货时间，属于查询类意图。"
+      },
+      {
+        "message": "帮我取消订单",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 1.0,
+        "reasoning": "用户明确要求执行取消订单的操作，属于请求类意图。"
+      },
+      {
+        "message": "请把订单改成明天配送",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求修改订单配送时间，属于请求操作。"
+      },
+      {
+        "message": "我需要修改收货地址",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求修改收货地址，属于操作请求。"
+      },
+      {
+        "message": "帮我申请退货",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求执行退货操作，属于请求类意图。"
+      },
+      {
+        "message": "请暂停我的订阅",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求执行暂停订阅的操作，属于请求类意图。"
+      },
+      {
+        "message": "能不能换一个大一号的",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求更换商品尺寸，属于服务请求。"
+      },
+      {
+        "message": "帮我备注放门口",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求客服执行‘备注放门口’的操作，属于服务请求。"
+      },
+      {
+        "message": "请重新发送验证码",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求重新发送验证码，属于请求类操作。"
+      },
+      {
+        "message": "我需要开具电子发票",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求开具电子发票，属于请求类意图。"
+      },
+      {
+        "message": "帮我合并两个订单发货",
+        "expected": "request",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求执行合并订单发货的操作，属于请求类意图。"
+      },
+      {
+        "message": "你们服务太差了！",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户直接表达了对服务的不满，属于投诉类意图。"
+      },
+      {
+        "message": "等了一个小时没人回复",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.9,
+        "reasoning": "用户明确表达了等待时间过长的不满，属于投诉类意图。"
+      },
+      {
+        "message": "客服态度非常恶劣",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达了对客服态度的负面评价，属于投诉类意图。"
+      },
+      {
+        "message": "配送员把包裹扔在门口就跑了",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户抱怨配送员将包裹随意丢弃在门口，未妥善交付，属于对服务的不满。"
+      },
+      {
+        "message": "承诺48小时解决现在一周了",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户抱怨承诺的48小时解决时间已过一周，表达不满情绪。"
+      },
+      {
+        "message": "产品质量和描述完全不符",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户明确表示产品质量与描述不符，属于对产品或服务的不满，符合投诉意图。"
+      },
+      {
+        "message": "这次体验 horrible",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.95,
+        "reasoning": "用户使用负面词汇'horrible'表达对体验的不满，属于投诉类意图。"
+      },
+      {
+        "message": "反复踢皮球没人负责",
+        "expected": "complaint",
+        "predicted": "complaint",
+        "confidence": 0.9,
+        "reasoning": "用户表达了对服务中推诿责任的不满，属于抱怨意图。"
+      },
+      {
+        "message": "应用一直报500错误",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户报告应用持续出现500错误，属于技术问题"
+      },
+      {
+        "message": "登录页面白屏",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户描述登录页面白屏，属于技术问题，符合technical意图"
+      },
+      {
+        "message": "App 闪退无法打开",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户描述App闪退无法打开，属于技术问题"
+      },
+      {
+        "message": "更新后无法启动",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户描述的是软件更新后无法启动的技术问题，符合technical意图"
+      },
+      {
+        "message": "一直提示 network error",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户描述网络错误提示，属于技术问题范畴。"
+      },
+      {
+        "message": "401 unauthorized 登录失败",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户报告了HTTP 401错误和登录失败，属于技术问题。"
+      },
+      {
+        "message": "系统 crash 了三次",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户明确提到系统崩溃（crash）三次，属于技术问题。"
+      },
+      {
+        "message": "接口 timeout 怎么办",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户询问接口超时问题，属于技术故障类咨询。"
+      },
+      {
+        "message": "后台一直 loading",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户描述应用后台持续加载中，属于技术问题"
+      },
+      {
+        "message": "OAuth 配置报错",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户提到OAuth配置报错，属于技术问题，与示例中'应用一直崩溃'类似。"
+      },
+      {
+        "message": "502 bad gateway",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户提到'502 bad gateway'，这是一个典型的HTTP服务器错误，属于技术问题。"
+      },
+      {
+        "message": "数据库连接失败提示",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.95,
+        "reasoning": "用户报告数据库连接失败，属于技术问题"
+      },
+      {
+        "message": "为什么扣了两次款？",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.95,
+        "reasoning": "用户询问扣款问题，属于账单相关意图"
+      },
+      {
+        "message": "退款多久到账",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.9,
+        "reasoning": "用户询问退款到账时间，涉及财务相关流程，属于账单类意图。"
+      },
+      {
+        "message": "发票开错了能重开吗",
+        "expected": "billing",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户请求重新开具发票，属于明确的业务操作请求。"
+      },
+      {
+        "message": "订阅多扣了一个月",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.95,
+        "reasoning": "用户提到订阅多扣款，属于账单相关的问题。"
+      },
+      {
+        "message": "支付失败但钱被扣了",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.95,
+        "reasoning": "用户反馈支付失败但钱被扣，涉及扣款问题，属于账单相关意图"
+      },
+      {
+        "message": "账单金额不对",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.95,
+        "reasoning": "用户明确提到账单金额问题，属于账单相关意图"
+      },
+      {
+        "message": "申请 refund 流程是什么",
+        "expected": "billing",
+        "predicted": "query",
+        "confidence": 0.95,
+        "reasoning": "用户询问退款流程，属于信息查询类意图。"
+      },
+      {
+        "message": "自动续费怎么关",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.9,
+        "reasoning": "用户询问如何关闭自动续费，涉及费用相关操作，属于账单意图。"
+      },
+      {
+        "message": "扣款记录在哪里看",
+        "expected": "billing",
+        "predicted": "billing",
+        "confidence": 0.95,
+        "reasoning": "用户询问扣款记录的查看位置，直接涉及账单和支付信息，属于billing意图。"
+      },
+      {
+        "message": "这单能全额退款吗",
+        "expected": "billing",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户询问能否全额退款，属于请求类意图。"
+      },
+      {
+        "message": "我要投诉，转人工！",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求投诉并转人工，符合升级处理意图"
+      },
+      {
+        "message": "叫你们经理来",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户要求与经理对话，属于升级投诉或寻求更高层级处理的典型表达。"
+      },
+      {
+        "message": "必须转 supervisor 处理",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求转接主管处理，属于升级投诉或请求更高权限处理的意图。"
+      },
+      {
+        "message": "我要找人工客服",
+        "expected": "escalation",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达需要人工客服协助，属于请求类意图。"
+      },
+      {
+        "message": "这个问题必须升级处理",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求将问题升级处理，符合升级投诉的意图"
+      },
+      {
+        "message": "请立即转接专员",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求转接专员，属于升级处理或投诉的意图。"
+      },
+      {
+        "message": "我不接受机器人回复了",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.9,
+        "reasoning": "用户明确表示不接受机器人回复，要求人工介入，属于升级投诉的意图。"
+      },
+      {
+        "message": "投诉到底找谁",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达投诉意愿并询问投诉对象，属于升级投诉意图。"
+      },
+      {
+        "message": "你好",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 1.0,
+        "reasoning": "用户消息为'你好'，与示例中'你好'的意图完全一致，属于问候语。"
+      },
+      {
+        "message": "您好",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户使用礼貌用语'您好'，符合问候意图的典型表达。"
+      },
+      {
+        "message": "嗨",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户发送了简单的问候语'嗨'，符合greeting意图的典型表达。"
+      },
+      {
+        "message": "hello",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户发送了常见的问候语'hello'，与示例中的'你好'意图一致。"
+      },
+      {
+        "message": "Hi there",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户发送了常见的问候语'Hi there'，与示例中'你好'的意图一致。"
+      },
+      {
+        "message": "早上好",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户使用常见的问候语'早上好'，符合greeting意图的典型表达。"
+      },
+      {
+        "message": "晚上好",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户使用问候语'晚上好'，与示例中的'你好'意图一致"
+      },
+      {
+        "message": "在吗",
+        "expected": "greeting",
+        "predicted": "greeting",
+        "confidence": 0.95,
+        "reasoning": "用户使用常见的问候语'在吗'，与示例中'你好'的意图一致。"
+      },
+      {
+        "message": "修改我的邮箱地址",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求修改邮箱地址，属于账户信息变更操作。"
+      },
+      {
+        "message": "忘记密码怎么办",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户询问忘记密码的处理方法，属于账户相关操作"
+      },
+      {
+        "message": "账户被锁定了",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户明确提到账户被锁定，属于账户相关的问题。"
+      },
+      {
+        "message": "怎么绑定手机号",
+        "expected": "account",
+        "predicted": "request",
+        "confidence": 0.95,
+        "reasoning": "用户询问如何绑定手机号，属于请求操作指导的意图。"
+      },
+      {
+        "message": "更换登录密码",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求更换登录密码，属于账户管理相关操作。"
+      },
+      {
+        "message": "注销账户流程",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户明确询问注销账户的流程，属于账户相关操作"
+      },
+      {
+        "message": "账号显示异常登录",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户提到账号显示异常登录，属于账户安全问题，符合account意图。"
+      },
+      {
+        "message": "修改收货人姓名",
+        "expected": "account",
+        "predicted": "account",
+        "confidence": 0.95,
+        "reasoning": "用户要求修改收货人姓名，属于账户信息变更操作。"
+      },
+      {
+        "message": "你们客服响应很快，点赞",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达了对客服响应速度的正面评价，属于反馈类意图。"
+      },
+      {
+        "message": "这次问题解决得很满意",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达了对问题解决结果的满意，属于正面反馈。"
+      },
+      {
+        "message": "产品很好用谢谢",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.95,
+        "reasoning": "用户表达了对产品的正面评价和感谢，属于反馈意图。"
+      },
+      {
+        "message": "服务体验不错",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.95,
+        "reasoning": "用户表达了对服务的正面评价，属于反馈类意图。"
+      },
+      {
+        "message": "处理效率很高，感谢",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.95,
+        "reasoning": "用户明确表达了对服务效率的正面评价和感谢，属于反馈类意图。"
+      },
+      {
+        "message": "今天天气怎么样",
+        "expected": "other",
+        "predicted": "other",
+        "confidence": 0.95,
+        "reasoning": "用户询问天气，不属于客服常见意图类别，归类为其他。"
+      },
+      {
+        "message": "随便聊聊",
+        "expected": "other",
+        "predicted": "other",
+        "confidence": 0.9,
+        "reasoning": "用户表示‘随便聊聊’，没有明确的服务请求、投诉或具体问题，属于非任务型闲聊。"
+      },
+      {
+        "message": "asdfghjkl",
+        "expected": "other",
+        "predicted": "other",
+        "confidence": 0.95,
+        "reasoning": "用户输入为无意义的乱码字符串，无法匹配任何已知意图类别。"
+      },
+      {
+        "message": "？？？",
+        "expected": "other",
+        "predicted": "other",
+        "confidence": 0.9,
+        "reasoning": "用户仅发送了问号，没有明确表达任何意图，因此归类为其他。"
+      },
+      {
+        "message": "嗯嗯",
+        "expected": "other",
+        "predicted": "other",
+        "confidence": 0.9,
+        "reasoning": "用户消息'嗯嗯'是模糊的肯定回应，未明确表达任何具体意图，因此归类为其他。"
+      },
+      {
+        "message": "那退款呢",
+        "expected": "billing",
+        "predicted": "request",
+        "confidence": 0.85,
+        "reasoning": "用户询问退款相关操作，属于请求类意图"
+      },
+      {
+        "message": "还是登录不了",
+        "expected": "technical",
+        "predicted": "technical",
+        "confidence": 0.9,
+        "reasoning": "用户提到'401错误'和'还是登录不了'，属于技术问题，符合technical意图。"
+      },
+      {
+        "message": "帮我查一下",
+        "expected": "query",
+        "predicted": "query",
+        "confidence": 0.85,
+        "reasoning": "用户请求查询订单信息，属于查询意图"
+      },
+      {
+        "message": "转人工吧",
+        "expected": "escalation",
+        "predicted": "escalation",
+        "confidence": 0.95,
+        "reasoning": "用户明确要求转人工，表明对当前服务不满，意图升级处理"
+      },
+      {
+        "message": "谢谢解决了",
+        "expected": "feedback",
+        "predicted": "feedback",
+        "confidence": 0.9,
+        "reasoning": "用户表达感谢并确认问题已解决，属于正面反馈。"
+      }
+    ]
+  },
+  "dataset_stats": {
+    "intent_cases": 92,
+    "intent_by_label": {
+      "query": 14,
+      "request": 10,
+      "complaint": 8,
+      "technical": 13,
+      "billing": 11,
+      "escalation": 9,
+      "greeting": 8,
+      "account": 8,
+      "feedback": 6,
+      "other": 5
+    },
+    "dialog_cases": 23,
+    "dialog_single_turn": 10,
+    "dialog_multi_turn": 13,
+    "dialog_total_turns": 49
+  },
+  "intent_failures": [
+    {
+      "message": "包裹显示已发货三天了还没到",
+      "expected": "query",
+      "predicted": "complaint",
+      "confidence": 0.85,
+      "reasoning": "用户抱怨包裹已发货三天仍未到达，表达了对物流延迟的不满。"
+    },
+    {
+      "message": "配送超时了怎么办",
+      "expected": "query",
+      "predicted": "complaint",
+      "confidence": 0.85,
+      "reasoning": "用户表达配送超时的问题，带有不满情绪，属于投诉类意图。"
+    },
+    {
+      "message": "发票开错了能重开吗",
+      "expected": "billing",
+      "predicted": "request",
+      "confidence": 0.95,
+      "reasoning": "用户请求重新开具发票，属于明确的业务操作请求。"
+    },
+    {
+      "message": "申请 refund 流程是什么",
+      "expected": "billing",
+      "predicted": "query",
+      "confidence": 0.95,
+      "reasoning": "用户询问退款流程，属于信息查询类意图。"
+    },
+    {
+      "message": "这单能全额退款吗",
+      "expected": "billing",
+      "predicted": "request",
+      "confidence": 0.95,
+      "reasoning": "用户询问能否全额退款，属于请求类意图。"
+    },
+    {
+      "message": "我要找人工客服",
+      "expected": "escalation",
+      "predicted": "request",
+      "confidence": 0.95,
+      "reasoning": "用户明确表达需要人工客服协助，属于请求类意图。"
+    },
+    {
+      "message": "怎么绑定手机号",
+      "expected": "account",
+      "predicted": "request",
+      "confidence": 0.95,
+      "reasoning": "用户询问如何绑定手机号，属于请求操作指导的意图。"
+    },
+    {
+      "message": "那退款呢",
+      "expected": "billing",
+      "predicted": "request",
+      "confidence": 0.85,
+      "reasoning": "用户询问退款相关操作，属于请求类意图"
+    }
+  ]
+}

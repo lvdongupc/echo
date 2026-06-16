@@ -1,0 +1,13 @@
+{
+  "_comment": "运行 python -m evaluation.run_eval --intent-only 后会被真实 baseline 覆盖",
+  "timestamp": "",
+  "total": 0,
+  "passed": 0,
+  "pass_rate": 0.0,
+  "avg_scores": {},
+  "regressions": [],
+  "recommendations": ["请先运行评测 CLI 生成 baseline"],
+  "results": [],
+  "intent_metrics": null,
+  "dataset_stats": null
+}
