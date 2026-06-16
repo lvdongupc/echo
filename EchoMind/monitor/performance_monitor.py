@@ -13,6 +13,7 @@
 """
 import asyncio
 import logging
+import os
 import statistics
 import time
 from collections import defaultdict, deque
@@ -96,6 +97,17 @@ class AnomalyDetector:
         return None
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        logger.warning("无效环境变量 %s=%r，使用默认 %s", name, raw, default)
+        return default
+
+
 # ── 性能监控器 ────────────────────────────────────────────────────────────────
 
 class PerformanceMonitor:
@@ -110,14 +122,6 @@ class PerformanceMonitor:
     这就是"利用 Monitor 监控在线表现"的闭环。
     """
 
-    # 告警阈值
-    THRESHOLDS = {
-        "agent_success_rate":  (0.90, Severity.ERROR,   "less_than"),
-        "tool_success_rate":   (0.95, Severity.WARNING,  "less_than"),
-        "agent_avg_ms":        (3000, Severity.WARNING,  "greater_than"),
-        "tool_avg_ms":         (5000, Severity.ERROR,    "greater_than"),
-    }
-
     def __init__(
         self,
         orchestrator,
@@ -125,17 +129,56 @@ class PerformanceMonitor:
         interval_s:       float = 10.0,
         webhook_url:      Optional[str] = None,
         prometheus_port:  Optional[int] = None,   # None = 不启动
+        *,
+        agent_success_rate_threshold: Optional[float] = None,
+        agent_avg_ms_threshold:       Optional[float] = None,
+        tool_success_rate_threshold:  Optional[float] = None,
+        tool_avg_ms_threshold:        Optional[float] = None,
+        penalty_success_rate:         Optional[float] = None,
+        penalty_avg_ms:               Optional[float] = None,
+        suggestion_success_rate:      Optional[float] = None,
+        suggestion_min_total:         Optional[int] = None,
+        anomaly_sensitivity:          Optional[float] = None,
     ):
+        # 告警阈值（默认适配远程 LLM：单次 Agent 调用 5–8s 属常见范围）
+        self._agent_sr_threshold = agent_success_rate_threshold if agent_success_rate_threshold is not None else _env_float("MONITOR_AGENT_SUCCESS_RATE_THRESHOLD", 0.80)
+        self._agent_ms_threshold = agent_avg_ms_threshold if agent_avg_ms_threshold is not None else _env_float("MONITOR_AGENT_AVG_MS_THRESHOLD", 8000.0)
+        self._tool_sr_threshold = tool_success_rate_threshold if tool_success_rate_threshold is not None else _env_float("MONITOR_TOOL_SUCCESS_RATE_THRESHOLD", 0.95)
+        self._tool_ms_threshold = tool_avg_ms_threshold if tool_avg_ms_threshold is not None else _env_float("MONITOR_TOOL_AVG_MS_THRESHOLD", 5000.0)
+
+        # 路由降权阈值（可与告警分离；默认略严于告警以保留路由反馈）
+        self._penalty_sr = penalty_success_rate if penalty_success_rate is not None else _env_float("MONITOR_PENALTY_SUCCESS_RATE", 0.85)
+        self._penalty_ms = penalty_avg_ms if penalty_avg_ms is not None else _env_float("MONITOR_PENALTY_AVG_MS", 7000.0)
+
+        self._suggestion_sr = suggestion_success_rate if suggestion_success_rate is not None else _env_float("MONITOR_SUGGESTION_SUCCESS_RATE", 0.75)
+        self._suggestion_min_total = suggestion_min_total if suggestion_min_total is not None else int(_env_float("MONITOR_SUGGESTION_MIN_TOTAL", 10))
+
+        self.THRESHOLDS = {
+            "agent_success_rate": (self._agent_sr_threshold, Severity.ERROR,   "less_than"),
+            "tool_success_rate":  (self._tool_sr_threshold, Severity.WARNING,  "less_than"),
+            "agent_avg_ms":       (self._agent_ms_threshold, Severity.WARNING, "greater_than"),
+            "tool_avg_ms":        (self._tool_ms_threshold, Severity.ERROR,    "greater_than"),
+        }
+
         self._orchestrator = orchestrator
         self._tool_manager = tool_manager
         self._interval     = interval_s
         self._webhook      = webhook_url
-        self._detector     = AnomalyDetector()
+        anomaly_z = anomaly_sensitivity if anomaly_sensitivity is not None else _env_float("ANOMALY_DETECTION_THRESHOLD", 2.5)
+        self._detector     = AnomalyDetector(sensitivity=anomaly_z)
 
         self._alerts:      List[Alert]      = []
         self._suggestions: List[Suggestion] = []
         self._active       = False
         self._task:        Optional[asyncio.Task] = None
+
+        logger.info(
+            "Monitor 阈值: agent_sr<%s agent_ms>%sms penalty_sr<%s penalty_ms>%sms",
+            self._agent_sr_threshold,
+            self._agent_ms_threshold,
+            self._penalty_sr,
+            self._penalty_ms,
+        )
 
         # Prometheus 指标（可选）
         self._prom: Dict[str, Any] = {}
@@ -240,35 +283,45 @@ class PerformanceMonitor:
             updater(routing_penalties)
         self._generate_routing_suggestions(agent_stats)
 
-    @staticmethod
-    def _routing_penalty(success_rate: float, avg_ms: float) -> float:
+    def _routing_penalty(self, success_rate: float, avg_ms: float) -> float:
         """把在线表现转成 0-0.9 的路由降权系数。"""
         penalty = 0.0
-        if success_rate < 0.90:
-            penalty += min(0.5, (0.90 - success_rate) * 2)
-        if avg_ms > 3000:
-            penalty += min(0.4, (avg_ms - 3000) / 10000)
+        if success_rate < self._penalty_sr:
+            penalty += min(0.5, (self._penalty_sr - success_rate) * 2)
+        if avg_ms > self._penalty_ms:
+            penalty += min(0.4, (avg_ms - self._penalty_ms) / 10000)
         return min(penalty, 0.9)
 
     def _check_threshold(self, metric: str, value: float, label: str) -> None:
         if metric not in self.THRESHOLDS:
             return
+        metric_key = f"{metric}:{label}"
         threshold, severity, operator = self.THRESHOLDS[metric]
         triggered = (operator == "less_than" and value < threshold) or \
                     (operator == "greater_than" and value > threshold)
-        if triggered:
-            alert = Alert(
-                severity=severity,
-                metric=f"{metric}:{label}",
-                message=f"{label} 的 {metric} = {value:.3f}，阈值 {threshold}",
-                value=value,
-                threshold=threshold,
-            )
-            self._alerts.append(alert)
-            logger.warning(f"[{severity.value.upper()}] {alert.message}")
-            # 异步发送 Webhook（不阻塞采集循环）
-            if self._webhook:
-                asyncio.create_task(self._send_webhook(alert))
+
+        # 指标恢复时标记已有告警为 resolved，避免 active_alerts 永久堆积
+        if not triggered:
+            for alert in self._alerts:
+                if alert.metric == metric_key and not alert.resolved:
+                    alert.resolved = True
+            return
+
+        # 同一 metric 未恢复前不重复追加告警（避免每 10s 刷一条）
+        if any(a.metric == metric_key and not a.resolved for a in self._alerts):
+            return
+
+        alert = Alert(
+            severity=severity,
+            metric=metric_key,
+            message=f"{label} 的 {metric} = {value:.3f}，阈值 {threshold}",
+            value=value,
+            threshold=threshold,
+        )
+        self._alerts.append(alert)
+        logger.warning(f"[{severity.value.upper()}] {alert.message}")
+        if self._webhook:
+            asyncio.create_task(self._send_webhook(alert))
 
     def _generate_routing_suggestions(self, agent_stats: Dict[str, Any]) -> None:
         """
@@ -276,7 +329,7 @@ class PerformanceMonitor:
         这是 Monitor → Orchestrator 反馈闭环的体现。
         """
         for agent_key, s in agent_stats.items():
-            if s["success_rate"] < 0.85 and s["total"] > 10:
+            if s["success_rate"] < self._suggestion_sr and s["total"] > self._suggestion_min_total:
                 self._add_suggestion(Suggestion(
                     title=f"Agent {agent_key} 成功率偏低",
                     detail=f"成功率 {s['success_rate']:.1%}，路由评分 {s['routing_score']:.3f}",
@@ -307,6 +360,12 @@ class PerformanceMonitor:
     def summary(self) -> Dict[str, Any]:
         """返回当前监控摘要，供 API 层暴露。"""
         return {
+            "thresholds": {
+                "agent_success_rate": self._agent_sr_threshold,
+                "agent_avg_ms":       self._agent_ms_threshold,
+                "penalty_success_rate": self._penalty_sr,
+                "penalty_avg_ms":       self._penalty_ms,
+            },
             "agent_stats":   self._orchestrator.get_stats(),
             "tool_stats":    self._tool_manager.get_stats(),
             "active_alerts": [asdict(a) for a in self._alerts if not a.resolved][-10:],
